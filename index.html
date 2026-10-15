@@ -12,18 +12,18 @@
 body {
   margin: 0;
   padding: 10px;
-  background: transparent;
-  color: white;
   font-family: Arial, sans-serif;
+  color: white;
+  background: transparent;
 }
 
 .player {
   width: 320px;
   max-width: 100%;
   padding: 16px;
-  background: #171717;
   border: 1px solid #333;
   border-radius: 16px;
+  background: #171717;
 }
 
 .header {
@@ -64,14 +64,13 @@ h3 {
   justify-content: center;
   align-items: center;
   gap: 16px;
-  margin: 16px 0;
+  margin: 18px 0;
 }
 
 button {
   border: 0;
   color: white;
   cursor: pointer;
-  font-size: 15px;
 }
 
 .control {
@@ -79,14 +78,15 @@ button {
   height: 38px;
   border-radius: 50%;
   background: #292929;
+  font-size: 16px;
 }
 
 .play {
   width: 46px;
   height: 46px;
   border-radius: 50%;
-  color: #111;
   background: #65e6a1;
+  color: #111;
   font-size: 19px;
 }
 
@@ -97,21 +97,16 @@ button {
   letter-spacing: 1px;
 }
 
-.playlist {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
 .song {
   display: flex;
-  align-items: center;
   gap: 10px;
   width: 100%;
-  padding: 10px;
-  border-radius: 8px;
+  padding: 11px;
+  margin: 4px 0;
   text-align: left;
+  border-radius: 8px;
   background: transparent;
+  font-size: 13px;
 }
 
 .song:hover { background: #292929; }
@@ -121,47 +116,22 @@ button {
   background: #252e29;
 }
 
-.song-number {
-  width: 18px;
-  color: #888;
-}
+.song-number { color: #888; }
 
 .song-name {
   flex: 1;
   overflow-wrap: anywhere;
 }
 
-.video-box {
-  margin-top: 12px;
-  overflow: hidden;
-  border-radius: 10px;
-  background: #000;
-}
-
-#youtube {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-}
-
-#youtube iframe {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border: 0;
+audio {
+  display: none;
 }
 
 .footer {
-  margin-top: 12px;
+  margin-top: 14px;
   color: #777;
   font-size: 10px;
   text-align: center;
-}
-
-.link {
-  display: block;
-  margin-top: 10px;
-  color: #65e6a1;
-  font-size: 12px;
 }
 </style>
 </head>
@@ -171,11 +141,13 @@ button {
   <div class="header">
     <div class="cover">♫</div>
     <div class="info">
-      <h3 id="title">Bài hát của bạn</h3>
-      <p id="artist">YouTube</p>
-      <p id="status">Đang tải trình phát...</p>
+      <h3 id="title">Chọn bài hát</h3>
+      <p id="artist">My Music</p>
+      <p id="status">Sẵn sàng</p>
     </div>
   </div>
+
+  <audio id="audio" preload="none"></audio>
 
   <div class="controls">
     <button class="control" onclick="previousSong()">⏮</button>
@@ -184,56 +156,27 @@ button {
     <button class="control" onclick="nextSong()">⏭</button>
   </div>
 
-  <div class="section-title">PLAYLIST</div>
-  <div class="playlist" id="playlist"></div>
+  <div class="section-title">MY PLAYLIST</div>
+  <div id="playlist"></div>
 
-<div class="video-box">
-  <iframe
-    id="youtubeFrame"
-    width="560"
-    height="315"
-    src="https://www.youtube.com/embed/utike82B1f8?si=k7G7HgtjzCABcmvp"
-    title="YouTube video player"
-    frameborder="0"
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-    referrerpolicy="strict-origin-when-cross-origin"
-    allowfullscreen>
-  </iframe>
-</div>
-
-  <a class="link" id="directLink"
-     href="https://www.youtube.com/watch?v=utike82B1f8"
-     target="_blank" rel="noopener noreferrer">
-    Mở bài hát trên YouTube ↗
-  </a>
-
-  <div class="footer">POWERED BY YOUTUBE</div>
+  <div class="footer">♪ MINI MUSIC PLAYER</div>
 </div>
 
 <script>
-/* Thêm hoặc sửa bài hát tại đây */
+/* Thay đường dẫn bằng file MP3 của bạn */
 const songs = [
   {
-    title: "Bài hát của bạn",
-    artist: "YouTube",
-    videoId: "utike82B1f8"
-  },
-  {
-    title: "Bài hát thứ hai",
-    artist: "YouTube",
-    videoId: "utike82B1f8"
-  },
-  {
-    title: "Bài hát thứ ba",
-    artist: "YouTube",
-    videoId: "utike82B1f8"
+    title: "Năm ấy",
+    artist: "DP",
+    src: "song1.mp3"
   }
 ];
 
 let current = 0;
-let player = null;
-let ready = false;
-let playing = false;
+
+const audio = document.getElementById("audio");
+const statusText = document.getElementById("status");
+const playButton = document.getElementById("playButton");
 
 function renderPlaylist() {
   const list = document.getElementById("playlist");
@@ -258,92 +201,40 @@ function renderPlaylist() {
   });
 }
 
-function updateInfo() {
+function playSong(index) {
+  current = (index + songs.length) % songs.length;
+
+  audio.src = songs[current].src;
   document.getElementById("title").textContent =
     songs[current].title;
-
   document.getElementById("artist").textContent =
     songs[current].artist;
 
-  document.getElementById("directLink").href =
-    "https://www.youtube.com/watch?v=" +
-    encodeURIComponent(songs[current].videoId);
-
   renderPlaylist();
-}
 
-function onYouTubeIframeAPIReady() {
-  player = new YT.Player("youtube", {
-    width: "288",
-    height: "162",
-    videoId: songs[current].videoId,
-
-    playerVars: {
-      playsinline: 1,
-      origin: window.location.origin
-    },
-
-    events: {
-      onReady: function() {
-        ready = true;
-        document.getElementById("status").textContent =
-          "Sẵn sàng · Bấm Play";
-      },
-
-      onStateChange: function(event) {
-        playing = event.data === YT.PlayerState.PLAYING;
-
-        document.getElementById("playButton").textContent =
-          playing ? "Ⅱ" : "▶";
-
-        if (event.data === YT.PlayerState.PLAYING)
-          document.getElementById("status").textContent =
-            "Đang phát";
-
-        if (event.data === YT.PlayerState.PAUSED)
-          document.getElementById("status").textContent =
-            "Đã tạm dừng";
-
-        if (event.data === YT.PlayerState.ENDED)
-          nextSong();
-      },
-
-      onError: function(event) {
-        const errors = {
-          2: "ID video không hợp lệ.",
-          5: "Lỗi trình phát HTML5.",
-          100: "Video bị xóa hoặc đặt riêng tư.",
-          101: "Video không cho phép nhúng.",
-          150: "Video không cho phép nhúng.",
-          153: "Lỗi nhận diện nguồn phát."
-        };
-
-        document.getElementById("status").textContent =
-          errors[event.data] || "Không thể phát video.";
-      }
-    }
+  audio.play().then(() => {
+    statusText.textContent = "Đang phát";
+  }).catch(() => {
+    statusText.textContent =
+      "Không tải được MP3. Kiểm tra đường dẫn.";
   });
 }
 
-function playSong(index) {
-  current = (index + songs.length) % songs.length;
-  updateInfo();
-
-  if (!ready) return;
-
-  document.getElementById("status").textContent =
-    "Đang tải bài hát...";
-
-  player.loadVideoById(songs[current].videoId);
-}
-
 function togglePlay() {
-  if (!ready) return;
+  if (audio.paused) {
+    if (!audio.src) {
+      playSong(current);
+      return;
+    }
 
-  if (playing)
-    player.pauseVideo();
-  else
-    player.playVideo();
+    audio.play().then(() => {
+      statusText.textContent = "Đang phát";
+    }).catch(() => {
+      statusText.textContent = "Không thể phát bài hát";
+    });
+  } else {
+    audio.pause();
+  }
 }
 
 function nextSong() {
@@ -354,15 +245,19 @@ function previousSong() {
   playSong(current - 1);
 }
 
-updateInfo();
+audio.addEventListener("play", () => {
+  playButton.textContent = "Ⅱ";
+});
 
-const script = document.createElement("script");
-script.src = "https://www.youtube.com/iframe_api";
-script.onerror = function() {
-  document.getElementById("status").textContent =
-    "Không tải được YouTube API.";
-};
-document.head.appendChild(script);
+audio.addEventListener("pause", () => {
+  playButton.textContent = "▶";
+  if (audio.currentTime > 0)
+    statusText.textContent = "Đã tạm dừng";
+});
+
+audio.addEventListener("ended", nextSong);
+
+renderPlaylist();
 </script>
 </body>
 </html>
